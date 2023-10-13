@@ -12,4 +12,4 @@ export interface IPlaceEntity {
   created_by: string;
 }
 
-export interface IPlaceDoc extends Document {}
+export interface IPlaceDoc extends IPlaceEntity, Document {}

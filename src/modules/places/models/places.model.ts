@@ -1,7 +1,7 @@
 import { Model, Schema, model } from 'mongoose';
 import { IPlaceDoc } from '../interfaces/places.interface';
 
-const placeSchema: Schema = new Schema(
+const placeSchema: Schema = new Schema<IPlaceDoc>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
