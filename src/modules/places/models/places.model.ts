@@ -11,7 +11,7 @@ const placeSchema: Schema = new Schema<IPlaceDoc>(
       lat: { type: Number, required: true },
       lng: { type: Number, required: true }
     },
-    created_by: { type: String, required: true }
+    created_by: { type: Schema.Types.ObjectId, required: true, ref: 'user' }
   },
   {
     timestamps: {
@@ -21,6 +21,6 @@ const placeSchema: Schema = new Schema<IPlaceDoc>(
   }
 );
 
-const PlaceModel: Model<IPlaceDoc> = model<IPlaceDoc>('Place', placeSchema, 'Place');
+const PlaceModel: Model<IPlaceDoc> = model<IPlaceDoc>('place', placeSchema, 'place');
 
 export default PlaceModel;

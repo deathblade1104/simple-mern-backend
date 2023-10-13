@@ -3,6 +3,8 @@ import { StatusCodes } from 'http-status-codes';
 import { Model } from 'mongoose';
 import Errors from '../../../core/errors';
 import utils from '../../../core/utils';
+import Database from '../../../setupDatabase';
+import userService from '../../users/services/users.service';
 import { IPlaceDoc, IPlaceEntity } from '../interfaces/places.interface';
 import PlaceModel from '../models/places.model';
 import placeService from '../services/place.service';
@@ -10,21 +12,34 @@ import placeService from '../services/place.service';
 class PlaceController {
   placeModel: Model<IPlaceDoc>;
   placeService;
+  userService;
 
   constructor() {
     this.placeModel = PlaceModel;
     this.placeService = placeService;
+    this.userService = userService;
   }
   private async createPlace(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const dbInstance = Database.getInstance();
+    const session = await dbInstance.getSession();
     try {
       const body: IPlaceEntity = req.body;
       if (utils.isEmptyObject(body)) {
         throw new Errors.BadRequestError('Request Body is empty. Paramters are required to create a Place entity.');
       }
-      const currPlace: IPlaceDoc = await this.placeModel.create(body);
+      if (utils.isEmptyObject(await this.userService.UserModel.findById(body.created_by))) {
+        throw new Errors.NotFoundError(`No User Found Assosciated with ID - ${body.created_by}.`);
+      }
+      session.startTransaction();
+      const currPlace = await this.placeModel.create([body], { session: session });
+      await this.userService.addPlaceToUser(currPlace[0].created_by, currPlace[0]._id, session);
+      await session.commitTransaction();
       res.status(StatusCodes.CREATED).json({ message: 'Success', place: currPlace });
     } catch (error) {
+      await session.abortTransaction();
       next(error);
+    } finally {
+      session.endSession();
     }
   }
 
@@ -65,13 +80,21 @@ class PlaceController {
     }
   }
   private async deletePlaceById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const dbInstance = Database.getInstance();
+    const session = await dbInstance.getSession();
     try {
       const placeId = req.params.id;
-      await this.placeService.findPlaceById(placeId);
-      await this.placeModel.deleteOne({ _id: placeId });
+      const currPlace = await this.placeService.findPlaceById(placeId);
+      session.startTransaction();
+      await this.userService.removePlaceFromUser(currPlace.created_by, currPlace._id, session);
+      await this.placeModel.deleteOne({ _id: placeId }, { session });
+      await session.commitTransaction();
       res.status(StatusCodes.OK).json({ message: 'Success' });
     } catch (error) {
+      await session.abortTransaction();
       next(error);
+    } finally {
+      session.endSession();
     }
   }
 

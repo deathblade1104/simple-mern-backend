@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export interface IPlaceEntity {
   title: string;
@@ -9,7 +9,7 @@ export interface IPlaceEntity {
     lat: number;
     lng: number;
   };
-  created_by: string;
+  created_by: Types.ObjectId;
 }
 
 export interface IPlaceDoc extends IPlaceEntity, Document {}

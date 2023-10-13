@@ -1,5 +1,5 @@
-import { Model, Schema, model } from 'mongoose';
-import uniqueValidator  from 'mongoose-unique-validator';
+import { Model, Schema, Types, model } from 'mongoose';
+import uniqueValidator from 'mongoose-unique-validator';
 import { IUserDoc } from '../interfaces/users.interface';
 
 const userSchema: Schema = new Schema<IUserDoc>(
@@ -8,7 +8,7 @@ const userSchema: Schema = new Schema<IUserDoc>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, minlength: 6 },
     image: { type: String, required: true },
-    places: { type: String, required: true }
+    places: { type: [Types.ObjectId], default: [], ref: 'place' }
   },
   {
     timestamps: {
@@ -19,6 +19,6 @@ const userSchema: Schema = new Schema<IUserDoc>(
 );
 
 userSchema.plugin(uniqueValidator);
-const UserModel: Model<IUserDoc> = model<IUserDoc>('User', userSchema, 'User');
+const UserModel: Model<IUserDoc> = model<IUserDoc>('user', userSchema, 'user');
 
 export default UserModel;
